@@ -141,6 +141,14 @@ class Item(pygame.sprite.Sprite):
         self.playSound()
         return self.itemType
 
+    def gravityCheck(self):
+        if self.rect.y > DISPLAYHEIGHT:
+            self.inAir = True
+        else:
+            self.inAir = False
+            self.rect.y = DISPLAYHEIGHT
+
+
 
 #Images
 charImgs = ('characters/guy0.png', 'characters/guy1.png', 'characters/guy2.png', 'characters/guy3.png')
