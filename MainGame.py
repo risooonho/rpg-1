@@ -22,12 +22,16 @@ ORANGE = (255, 128, 0)
 CYAN = (0, 255, 255)
 
 pygame.init()
+
+#Constants
 DISPLAYWIDTH = 1024
 DISPLAYHEIGHT = 683
 PLAYERSCALEW = 80
 PLAYERSCALEY = 120
-DISPLAYSURF = pygame.display.set_mode((DISPLAYWIDTH, DISPLAYHEIGHT))
+GRAVITY = 0.5
 FPS = 60
+
+DISPLAYSURF = pygame.display.set_mode((DISPLAYWIDTH, DISPLAYHEIGHT))
 FPSCLOCK = pygame.time.Clock()
 pygame.display.set_caption("RPG")
 
@@ -46,6 +50,7 @@ class Player(pygame.sprite.Sprite):
         self.left = False
         self.moving = False
         self.jumping = False
+        self.inventory = {}
 
     def loadImages(self, images):
         self.charWidth = PLAYERSCALEW
@@ -115,17 +120,34 @@ class Player(pygame.sprite.Sprite):
         collisionList = pygame.sprite.spritecollide(self, items, True)
         for collision in collisionList:
             item = collision.pickUp()
-            #self.updateInventory(item)
+            self.updateInventory(item)
+            print(self.inventory)
+
+    def updateInventory(self, item):
+        for key in item.keys():
+            if key in self.inventory:
+                self.inventory[key] += item[key]
+            else:
+                self.inventory = dict(list(self.inventory.items()) + list(item.items()))
+
+    def get_inventory(self):
+        return self.inventory
 
 class Item(pygame.sprite.Sprite):
-    def __init__(self, x, y, itemType, image, sound=None):
+    def __init__(self, x, y, itemType, image, width, height, sound=None):
         pygame.sprite.Sprite.__init__(self)
+        self.width = width
+        self.height = height
         self.image = pygame.image.load(image).convert_alpha()
+        self.image = pygame.transform.scale(self.image, (self.width, self.height))
+        self.imageWidth = self.image.get_width()
+        self.imageHeight = self.image.get_height()
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
         self.itemType = itemType
         self.loadSound(sound)
+        self.itemFall = -6
 
     def loadSound(self, sound):
         if sound != None:
@@ -142,27 +164,42 @@ class Item(pygame.sprite.Sprite):
         return self.itemType
 
     def gravityCheck(self):
-        if self.rect.y > DISPLAYHEIGHT:
+        if self.rect.y < DISPLAYHEIGHT - self.imageHeight:
             self.inAir = True
+            self.itemFall += GRAVITY
+            self.rect.y += self.itemFall
         else:
             self.inAir = False
-            self.rect.y = DISPLAYHEIGHT
+            self.rect.y = DISPLAYHEIGHT - self.imageHeight
+            self.itemFall = 0
 
-
+#Text
+inventoryFont = pygame.font.SysFont('georgia', 32)
+selectFont = pygame.font.SysFont('georgia', 32)
+selectFont.set_underline(True)
 
 #Images
 charImgs = ('characters/guy0.png', 'characters/guy1.png', 'characters/guy2.png', 'characters/guy3.png')
 coinImg = 'items/coin0.png'
+swordImg = 'items/sword.png'
 background = pygame.image.load("backgrounds/forest.jpg").convert()
 background = pygame.transform.scale(background,(DISPLAYWIDTH, DISPLAYHEIGHT))
 
 #Sounds
 coinSound = 'sounds/coin.wav'
+swordSound = 'sounds/sword.wav'
 
-items = pygame.sprite.Group() #Creates sprite group
-coin = Item(500, 355, {'coin':1}, coinImg, coinSound) #Creates coin item
-coin2 = Item(600, 500, {'coin':1}, coinImg, coinSound) #Creates coin item
-items.add(coin, coin2) #Adds coin to sprite group
+#Creates sprite group of items
+items = pygame.sprite.Group()
+
+#Creates multiple coins
+coinList = []
+for i in range(0,3):
+    coinList.append(Item(300+20*i, 500, {'coin':1}, coinImg, 16, 16, coinSound))
+#Creates sword
+sword = Item(700,500, {'sword':1}, swordImg, 36, 36, swordSound)
+
+items.add(coinList, sword) #Adds items to sprite group
 
 #Starting coords
 player = Player(DISPLAYWIDTH/2, DISPLAYHEIGHT - PLAYERSCALEY, charImgs)
@@ -172,7 +209,7 @@ def level():
     while True:#Game Loop
         #Gravity
         if player.jumping == True:
-            moveY += 0.5
+            moveY += GRAVITY
         else:
             moveY = 0
 
@@ -181,6 +218,10 @@ def level():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
 
             #Player movement (side view)
             if event.type == pygame.KEYDOWN:
@@ -190,6 +231,8 @@ def level():
                     moveX += 5
                 if event.key == pygame.K_UP and player.jumping == False:
                     moveY += -10
+                if event.key == pygame.K_e:
+                    inventoryMenu()
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT:
@@ -220,11 +263,90 @@ def level():
 
             #More events
 
-
         DISPLAYSURF.blit(background, (0,0))
+        #Update and draw player
         player.update(moveX, moveY, items)
         player.draw(DISPLAYSURF)
+        #Update and draw items
+        itemList = items.sprites()
+        for i in range(0,len(itemList)):
+            itemList[i].gravityCheck()
         items.draw(DISPLAYSURF)
+
+        FPSCLOCK.tick(FPS)
+        pygame.display.update()
+
+scroll = pygame.image.load("backgrounds/scroll.png").convert_alpha()
+scroll = pygame.transform.scale(scroll, (844, 543))
+#Defaults
+scrollX = 90
+scrollY = 70
+
+def inventoryMenu():
+    playerInv = player.get_inventory()
+    invKeys = []
+    if playerInv == {}:
+        emptyInvMessage()
+    else:
+        for key in playerInv.keys():
+            invKeys.append(key)
+        if len(invKeys) <= 8:
+            smallInvMenu(playerInv, invKeys)
+
+def emptyInvMessage():
+    HeaderText = inventoryFont.render('--Inventory--', True, BLACK)
+    EmptyText = inventoryFont.render('Inventory is empty', True, BLACK)
+    xcoord = 212
+    ycoord = 150
+    Open = True
+    while Open:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_e:
+                    Open = False
+        DISPLAYSURF.blit(scroll, (scrollX, scrollY))
+        DISPLAYSURF.blit(HeaderText, (xcoord, ycoord))
+        DISPLAYSURF.blit(EmptyText, (xcoord, ycoord+50))
+        FPSCLOCK.tick(FPS)
+        pygame.display.update()
+
+def smallInvMenu(playerInv, invKeys):
+    HeaderText = inventoryFont.render('--Inventory--', True, BLACK)
+    xcoord = 212
+    Open = True
+    selectNum = 0
+    while Open:
+        ycoord = 150
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_e:
+                    Open = False
+                if event.key == pygame.K_UP:
+                    if selectNum > 0:
+                        selectNum -= 1
+                    else:
+                        selectNum = len(invKeys) - 1
+                if event.key == pygame.K_DOWN:
+                    if selectNum < len(invKeys) - 1:
+                        selectNum += 1
+                    else:
+                        selectNum = 0
+        DISPLAYSURF.blit(scroll, (scrollX, scrollY))
+        DISPLAYSURF.blit(HeaderText, (xcoord, ycoord))
+        ycoord += 50
+        for key in invKeys:
+            if invKeys[selectNum] == key:
+                itemtext = selectFont.render(key + '---' + str(playerInv[key]), True, BLACK)
+            else:
+                itemtext = inventoryFont.render(key + '---' + str(playerInv[key]), True, BLACK)
+            DISPLAYSURF.blit(itemtext, (xcoord, ycoord))
+            ycoord += 40
         FPSCLOCK.tick(FPS)
         pygame.display.update()
 
