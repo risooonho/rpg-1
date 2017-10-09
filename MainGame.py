@@ -1,5 +1,6 @@
 import pygame, sys
 from pygame.locals import *
+import random
 
 #Colors (R, G, B)
 WHITE = (255, 255, 255)
@@ -147,7 +148,7 @@ class Item(pygame.sprite.Sprite):
         self.rect.y = y
         self.itemType = itemType
         self.loadSound(sound)
-        self.itemFall = -6
+        self.itemFall = random.randrange(-10,-2)
 
     def loadSound(self, sound):
         if sound != None:
@@ -195,7 +196,7 @@ items = pygame.sprite.Group()
 #Creates multiple coins
 coinList = []
 for i in range(0,3):
-    coinList.append(Item(300+20*i, 500, {'coin':1}, coinImg, 16, 16, coinSound))
+    coinList.append(Item(random.randrange(0,DISPLAYWIDTH), 500, {'coin':1}, coinImg, 16, 16, coinSound))
 #Creates sword
 sword = Item(700,500, {'sword':1}, swordImg, 36, 36, swordSound)
 
