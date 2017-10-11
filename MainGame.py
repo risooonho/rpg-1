@@ -123,6 +123,7 @@ class Player(pygame.sprite.Sprite):
             item = collision.pickUp()
             self.updateInventory(item)
             print(self.inventory)
+            itemPickupText()
 
     def updateInventory(self, item):
         for key in item.keys():
@@ -241,27 +242,6 @@ def level():
                 if event.key == pygame.K_RIGHT:
                     moveX += -5
 
-
-            #Player movement (top view)
-            # if event.type == pygame.KEYDOWN:
-            #     if event.key == pygame.K_a:
-            #         moveX = -5
-            #     if event.key == pygame.K_d:
-            #         moveX = 5
-            #     if event.key == pygame.K_w:
-            #         moveY = -5
-            #     if event.key == pygame.K_s:
-            #         moveY = 5
-            # if event.type == pygame.KEYUP:
-            #     if event.key == pygame.K_a:
-            #         moveX = 0
-            #     if event.key == pygame.K_d:
-            #         moveX = 0
-            #     if event.key == pygame.K_w:
-            #         moveY = 0
-            #     if event.key == pygame.K_s:
-            #         moveY = 0
-
             #More events
 
         DISPLAYSURF.blit(background, (0,0))
@@ -349,6 +329,17 @@ def smallInvMenu(playerInv, invKeys):
             DISPLAYSURF.blit(itemtext, (xcoord, ycoord))
             ycoord += 40
         FPSCLOCK.tick(FPS)
+        pygame.display.update()
+
+def itemPickupText():
+    popuptext = inventoryFont.render('You picked up an item!', True, BLUE)
+    xcoord = 0
+    ycoord = 0
+    Open = True
+    openCounter = 300
+    while openCounter > 0:
+        DISPLAYSURF.blit(popuptext, (xcoord, ycoord))
+        openCounter -=1
         pygame.display.update()
 
 level()
