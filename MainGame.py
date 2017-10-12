@@ -52,6 +52,7 @@ class Player(pygame.sprite.Sprite):
         self.moving = False
         self.jumping = False
         self.inventory = {}
+        self.pickUpCoolDown = 0
 
     def loadImages(self, images):
         self.charWidth = PLAYERSCALEW
@@ -118,12 +119,12 @@ class Player(pygame.sprite.Sprite):
             self.imageNum = 0
 
     def itemsCollision(self, items):
-        collisionList = pygame.sprite.spritecollide(self, items, True)
-        for collision in collisionList:
+        self.collisionList = pygame.sprite.spritecollide(self, items, True)
+        for collision in self.collisionList:
             item = collision.pickUp()
             self.updateInventory(item)
             print(self.inventory)
-            itemPickupText()
+            self.pickUpCoolDown = 50
 
     def updateInventory(self, item):
         for key in item.keys():
@@ -253,6 +254,14 @@ def level():
         for i in range(0,len(itemList)):
             itemList[i].gravityCheck()
         items.draw(DISPLAYSURF)
+        #On-screen messages
+        if len(player.collisionList) > 0:
+            popuptext = inventoryFont.render('You picked up a ' + list(player.collisionList[0].itemType.keys())[0], True, GREEN)
+        if player.pickUpCoolDown > 0:
+            DISPLAYSURF.blit(popuptext, (0, 0))
+            player.pickUpCoolDown -= 1
+
+        #print(player.pickUpCoolDown)
 
         FPSCLOCK.tick(FPS)
         pygame.display.update()
@@ -329,17 +338,6 @@ def smallInvMenu(playerInv, invKeys):
             DISPLAYSURF.blit(itemtext, (xcoord, ycoord))
             ycoord += 40
         FPSCLOCK.tick(FPS)
-        pygame.display.update()
-
-def itemPickupText():
-    popuptext = inventoryFont.render('You picked up an item!', True, BLUE)
-    xcoord = 0
-    ycoord = 0
-    Open = True
-    openCounter = 300
-    while openCounter > 0:
-        DISPLAYSURF.blit(popuptext, (xcoord, ycoord))
-        openCounter -=1
         pygame.display.update()
 
 level()
