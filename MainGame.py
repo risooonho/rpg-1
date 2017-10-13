@@ -256,7 +256,10 @@ def level():
         items.draw(DISPLAYSURF)
         #On-screen messages
         if len(player.collisionList) > 0:
-            popuptext = inventoryFont.render('You picked up a ' + list(player.collisionList[0].itemType.keys())[0], True, GREEN)
+            if list(player.collisionList[0].itemType.keys())[0] != "coin":
+                popuptext = inventoryFont.render('You picked up a ' + list(player.collisionList[0].itemType.keys())[0], True, GREEN)
+            else:
+                popuptext = inventoryFont.render('Coins: ' + str(player.inventory.get('coin')), True, GREEN)
         if player.pickUpCoolDown > 0:
             DISPLAYSURF.blit(popuptext, (0, 0))
             player.pickUpCoolDown -= 1
