@@ -83,11 +83,11 @@ class Player(pygame.sprite.Sprite):
 
     def movementCheck(self, oldx, oldy):
         #Jumping check/ Floor check
-        if self.rect.y < (DISPLAYHEIGHT - self.charHeight):
+        if self.rect.y < (DISPLAYHEIGHT - (self.charHeight + 10)):
             self.jumping = True
         else:
             self.jumping = False
-            self.rect.y = (DISPLAYHEIGHT - self.charHeight)
+            self.rect.y = (DISPLAYHEIGHT - (self.charHeight + 10))
         #Move check
         if self.rect.x == oldx and self.rect.y == oldy and self.jumping == False:
             self.moving = False
@@ -166,13 +166,13 @@ class Item(pygame.sprite.Sprite):
         return self.itemType
 
     def gravityCheck(self):
-        if self.rect.y < DISPLAYHEIGHT - self.imageHeight:
+        if self.rect.y < DISPLAYHEIGHT - (self.imageHeight + 10):
             self.inAir = True
             self.itemFall += GRAVITY
             self.rect.y += self.itemFall
         else:
             self.inAir = False
-            self.rect.y = DISPLAYHEIGHT - self.imageHeight
+            self.rect.y = DISPLAYHEIGHT - (self.imageHeight + 10)
             self.itemFall = 0
 
 #Text
