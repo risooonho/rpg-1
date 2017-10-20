@@ -197,7 +197,7 @@ items = pygame.sprite.Group()
 
 #Creates multiple coins
 coinList = []
-for i in range(0,3):
+for i in range(0,30):
     coinList.append(Item(random.randrange(0,DISPLAYWIDTH), 500, {'coin':1}, coinImg, 16, 16, coinSound))
 #Creates sword
 sword = Item(700,500, {'sword':1}, swordImg, 36, 36, swordSound)
