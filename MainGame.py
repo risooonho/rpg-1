@@ -1,6 +1,9 @@
 import pygame, sys
 from pygame.locals import *
 import random
+from ItemsClasses import *
+from PlayerClasses import *
+from constants import *
 
 #Colors (R, G, B)
 WHITE = (255, 255, 255)
@@ -24,157 +27,9 @@ CYAN = (0, 255, 255)
 
 pygame.init()
 
-#Constants
-DISPLAYWIDTH = 1024
-DISPLAYHEIGHT = 683
-PLAYERSCALEW = 80
-PLAYERSCALEY = 120
-GRAVITY = 0.5
-FPS = 60
-
 DISPLAYSURF = pygame.display.set_mode((DISPLAYWIDTH, DISPLAYHEIGHT))
 FPSCLOCK = pygame.time.Clock()
 pygame.display.set_caption("RPG")
-
-#Player class------------------------------:
-class Player(pygame.sprite.Sprite):
-    def __init__(self, x, y, images):
-        pygame.sprite.Sprite.__init__(self)
-        self.loadImages(images)
-        self.image = self.i0
-        self.imageNum = 0
-        self.timeTarget = 10
-        self.timeNum = 0
-        self.rect = self.image.get_rect()
-        self.rect.x = x #Left
-        self.rect.y = y #Top
-        self.left = False
-        self.moving = False
-        self.jumping = False
-        self.inventory = {}
-        self.pickUpCoolDown = 0
-
-    def loadImages(self, images):
-        self.charWidth = PLAYERSCALEW
-        self.charHeight = PLAYERSCALEY
-        self.i0 = pygame.image.load(images[0]).convert_alpha()
-        self.i0 = pygame.transform.scale(self.i0, (self.charWidth, self.charHeight))
-        self.i1 = pygame.image.load(images[1]).convert_alpha()
-        self.i1 = pygame.transform.scale(self.i1, (self.charWidth, self.charHeight))
-        self.i2 = pygame.image.load(images[2]).convert_alpha()
-        self.i2 = pygame.transform.scale(self.i2, (self.charWidth, self.charHeight))
-        self.i3 = pygame.image.load(images[3]).convert_alpha()
-        self.i3 = pygame.transform.scale(self.i3, (self.charWidth, self.charHeight))
-        self.images = (self.i0, self.i1, self.i2, self.i3)
-
-    def update(self, movex, movey, items):
-        self.moveSprite(movex, movey)
-        self.itemsCollision(items)
-        self.render()
-
-    def draw(self, Surface):
-        Surface.blit(self.image, (self.rect.x, self.rect.y))
-
-    def moveSprite(self, movex, movey):
-        oldX = self.rect.x
-        oldY = self.rect.y
-        self.rect.x += movex
-        self.rect.y += movey
-        self.movementCheck(oldX, oldY)
-
-    def movementCheck(self, oldx, oldy):
-        #Jumping check/ Floor check
-        if self.rect.y < (DISPLAYHEIGHT - (self.charHeight + 10)):
-            self.jumping = True
-        else:
-            self.jumping = False
-            self.rect.y = (DISPLAYHEIGHT - (self.charHeight + 10))
-        #Move check
-        if self.rect.x == oldx and self.rect.y == oldy and self.jumping == False:
-            self.moving = False
-        else:
-            self.moving = True
-            if self.rect.x > oldx:
-                self.left = False
-            elif self.rect.x < oldx:
-                self.left = True
-
-    def render(self):
-        self.chooseImageNum()
-        if self.left == True:
-            self.image = pygame.transform.flip(self.images[self.imageNum], True, False)
-        else:
-            self.image = self.images[self.imageNum]
-
-    def chooseImageNum(self):
-        if self.moving == True and self.jumping == False:
-            self.timeNum += 1
-            if self.timeNum >= self.timeTarget:
-                if self.imageNum < 3:
-                    self.imageNum += 1
-                else:
-                    self.imageNum = 0
-                self.timeNum = 0
-        else:
-            self.imageNum = 0
-
-    def itemsCollision(self, items):
-        self.collisionList = pygame.sprite.spritecollide(self, items, True)
-        for collision in self.collisionList:
-            item = collision.pickUp()
-            self.updateInventory(item)
-            print(self.inventory)
-            self.pickUpCoolDown = 50
-
-    def updateInventory(self, item):
-        for key in item.keys():
-            if key in self.inventory:
-                self.inventory[key] += item[key]
-            else:
-                self.inventory = dict(list(self.inventory.items()) + list(item.items()))
-
-    def get_inventory(self):
-        return self.inventory
-
-class Item(pygame.sprite.Sprite):
-    def __init__(self, x, y, itemType, image, width, height, sound=None):
-        pygame.sprite.Sprite.__init__(self)
-        self.width = width
-        self.height = height
-        self.image = pygame.image.load(image).convert_alpha()
-        self.image = pygame.transform.scale(self.image, (self.width, self.height))
-        self.imageWidth = self.image.get_width()
-        self.imageHeight = self.image.get_height()
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
-        self.itemType = itemType
-        self.loadSound(sound)
-        self.itemFall = random.randrange(-10,-2)
-
-    def loadSound(self, sound):
-        if sound != None:
-            self.sound = pygame.mixer.Sound(sound)
-        else:
-            self.sound = None
-
-    def playSound(self):
-        if self.sound != None:
-            self.sound.play()
-
-    def pickUp(self):
-        self.playSound()
-        return self.itemType
-
-    def gravityCheck(self):
-        if self.rect.y < DISPLAYHEIGHT - (self.imageHeight + 10):
-            self.inAir = True
-            self.itemFall += GRAVITY
-            self.rect.y += self.itemFall
-        else:
-            self.inAir = False
-            self.rect.y = DISPLAYHEIGHT - (self.imageHeight + 10)
-            self.itemFall = 0
 
 #Text
 inventoryFont = pygame.font.SysFont('georgia', 32)
@@ -187,6 +42,15 @@ coinImg = 'items/coin0.png'
 swordImg = 'items/sword.png'
 background = pygame.image.load("backgrounds/forest.jpg").convert()
 background = pygame.transform.scale(background,(DISPLAYWIDTH, DISPLAYHEIGHT))
+
+#Backgrounds
+backgroundNumber = 0
+
+backgrounds = []
+backgrounds.append(pygame.image.load("backgrounds/forest.jpg").convert())
+backgrounds[-1] = pygame.transform.scale(backgrounds[-1],(DISPLAYWIDTH, DISPLAYHEIGHT))
+backgrounds.append(pygame.image.load("backgrounds/desert.jpg").convert())
+backgrounds[-1] = pygame.transform.scale(backgrounds[-1],(DISPLAYWIDTH, DISPLAYHEIGHT))
 
 #Sounds
 coinSound = 'sounds/coin.wav'
@@ -209,7 +73,9 @@ player = Player(DISPLAYWIDTH/2, DISPLAYHEIGHT - PLAYERSCALEY, charImgs)
 
 def level():
     moveX, moveY = 0, 0
-    while True:#Game Loop
+    global backgroundNumber
+    #Game Loop
+    while True:
         #Gravity
         if player.jumping == True:
             moveY += GRAVITY
@@ -235,6 +101,8 @@ def level():
                 if event.key == pygame.K_UP and player.jumping == False:
                     moveY += -10
                 if event.key == pygame.K_e:
+                    moveX = 0
+                    moveY = 0
                     inventoryMenu()
 
             if event.type == pygame.KEYUP:
@@ -245,14 +113,24 @@ def level():
 
             #More events
 
-        DISPLAYSURF.blit(background, (0,0))
+        #Background change
+        if player.rect.x > DISPLAYWIDTH and (len(backgrounds) - 1) > backgroundNumber:
+            backgroundNumber += 1
+            player.rect.x = 0
+        elif player.rect.x < 0 and backgroundNumber > 0:
+            backgroundNumber -= 1
+            player.rect.x = DISPLAYWIDTH
+
+        DISPLAYSURF.blit(backgrounds[backgroundNumber], (0,0))
         #Update and draw player
         player.update(moveX, moveY, items)
         player.draw(DISPLAYSURF)
+        player.totalx = (DISPLAYWIDTH * backgroundNumber) + player.rect.x
+        player.totaly = player.rect.y
         #Update and draw items
         itemList = items.sprites()
         for i in range(0,len(itemList)):
-            itemList[i].gravityCheck()
+            itemList[i].gravity_check()
         items.draw(DISPLAYSURF)
         #On-screen messages
         if len(player.collisionList) > 0:
