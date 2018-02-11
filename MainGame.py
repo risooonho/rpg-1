@@ -58,24 +58,34 @@ swordSound = 'sounds/sword.wav'
 
 #Creates sprite group of items
 items = pygame.sprite.Group()
-
 #Creates multiple coins
 coinList = []
 for i in range(0,30):
     coinList.append(Item(random.randrange(0,DISPLAYWIDTH), 500, {'coin':1}, coinImg, 16, 16, coinSound))
 #Creates sword
 sword = Item(700,500, {'sword':1}, swordImg, 36, 36, swordSound)
+#Adds items to sprite group
+items.add(coinList, sword)
 
-items.add(coinList, sword) #Adds items to sprite group
+#Creates sprite group for walls
+walls = pygame.sprite.Group()
+#Creates walls
+floor = Wall(0, DISPLAYHEIGHT, DISPLAYWIDTH, 10)
+wall1 = Wall(300, DISPLAYHEIGHT-100, 300, 30)
+wall2 = Wall(300, DISPLAYHEIGHT-400, 30, 300)
+#Adds walls to wall group
+walls.add(floor, wall1, wall2)
 
 #Starting coords
-player = Player(DISPLAYWIDTH/2, DISPLAYHEIGHT - PLAYERSCALEY, charImgs)
+player = Player(DISPLAYWIDTH/2, 50, charImgs)
 
 def level():
     moveX, moveY = 0, 0
     global backgroundNumber
     #Game Loop
     while True:
+        # print(player.jumping, moveY)
+
         #Gravity
         if player.jumping == True:
             moveY += GRAVITY
@@ -100,6 +110,8 @@ def level():
                     moveX += 5
                 if event.key == pygame.K_UP and player.jumping == False:
                     moveY += -10
+                # if event.key == pygame.K_DOWN:
+                #     moveY += 10
                 if event.key == pygame.K_e:
                     moveX = 0
                     moveY = 0
@@ -123,7 +135,7 @@ def level():
 
         DISPLAYSURF.blit(backgrounds[backgroundNumber], (0,0))
         #Update and draw player
-        player.update(moveX, moveY, items)
+        player.update(moveX, moveY, items, walls)
         player.draw(DISPLAYSURF)
         player.totalx = (DISPLAYWIDTH * backgroundNumber) + player.rect.x
         player.totaly = player.rect.y
@@ -142,7 +154,8 @@ def level():
             DISPLAYSURF.blit(popuptext, (0, 0))
             player.pickUpCoolDown -= 1
 
-        #print(player.pickUpCoolDown)
+        #Draw walls
+        walls.draw(DISPLAYSURF)
 
         FPSCLOCK.tick(FPS)
         pygame.display.update()

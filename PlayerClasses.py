@@ -14,10 +14,12 @@ class Player(pygame.sprite.Sprite):
         self.rect.x = x #Left
         self.rect.y = y #Top
         self.left = False
+        self.down = False
         self.moving = False
         self.jumping = False
         self.inventory = {}
         self.pickUpCoolDown = 0
+        self.ontop = False
 
     def load_images(self, images):
         self.charWidth = PLAYERSCALEX
@@ -32,28 +34,32 @@ class Player(pygame.sprite.Sprite):
         self.i3 = pygame.transform.scale(self.i3, (self.charWidth, self.charHeight))
         self.images = (self.i0, self.i1, self.i2, self.i3)
 
-    def update(self, movex, movey, items):
-        self.move_sprite(movex, movey)
+    def update(self, movex, movey, items, walls):
+        self.move_sprite(movex, movey, walls)
         self.items_coll(items)
         self.render()
 
     def draw(self, Surface):
         Surface.blit(self.image, (self.rect.x, self.rect.y))
 
-    def move_sprite(self, movex, movey):
+    def move_sprite(self, movex, movey, walls):
         oldX = self.rect.x
         oldY = self.rect.y
         self.rect.x += movex
+        self.walls_coll_x(walls)
         self.rect.y += movey
-        self.movement_check(oldX, oldY)
+        self.walls_coll_y(walls)
+        self.move_check(oldX, oldY)
+        # print(movey, self.jumping)
 
-    def movement_check(self, oldx, oldy):
+    def move_check(self, oldx, oldy):
         #Jumping check/ Floor check
-        if self.rect.y < (DISPLAYHEIGHT - (self.charHeight + 10)):
-            self.jumping = True
-        else:
-            self.jumping = False
-            self.rect.y = (DISPLAYHEIGHT - (self.charHeight + 10))
+        #self.rect.y < (DISPLAYHEIGHT - (self.charHeight + 10)) and
+        # if self.ontop == False:
+        #     self.jumping = True
+        # else:
+        #     self.jumping = False
+            #self.rect.y = (DISPLAYHEIGHT - (self.charHeight + 10))
         #Move check
         if self.rect.x == oldx and self.rect.y == oldy and self.jumping == False:
             self.moving = False
@@ -63,6 +69,10 @@ class Player(pygame.sprite.Sprite):
                 self.left = False
             elif self.rect.x < oldx:
                 self.left = True
+            if self.rect.y > oldy:
+                self.down = True
+            elif self.rect.y < oldy:
+                self.down = False
 
     def render(self):
         self.choose_imageNum()
@@ -90,6 +100,30 @@ class Player(pygame.sprite.Sprite):
             self.update_inventory(item)
             print(self.inventory)
             self.pickUpCoolDown = 50
+
+    def walls_coll_x(self, walls):
+        collisionList = pygame.sprite.spritecollide(self, walls, False)
+        for collision in collisionList:
+            if self.rect.bottom > collision.get_top():
+                if self.left == False:
+                    self.rect.right = collision.get_left()
+                else:
+                    self.rect.left = collision.get_right()
+
+    def walls_coll_y(self, walls):
+        collisionList = pygame.sprite.spritecollide(self, walls, False)
+        for collision in collisionList:
+            if self.down == True:
+                self.rect.bottom = collision.get_top()
+            else:
+                self.rect.top = collision.get_bottom()
+        # if len(collisionList) != 0:
+        #     self.jumping = False
+        #     # print("flying")
+        # else:
+        #     self.jumping = True
+        #     # print("landed")
+        print(collisionList, self.jumping)
 
     def update_inventory(self, item):
         for key in item.keys():
