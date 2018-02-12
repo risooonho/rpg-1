@@ -20,6 +20,7 @@ class Player(pygame.sprite.Sprite):
         self.inventory = {}
         self.pickUpCoolDown = 0
         self.ontop = False
+        self.collidedList = []
 
     def load_images(self, images):
         self.charWidth = PLAYERSCALEX
@@ -103,6 +104,8 @@ class Player(pygame.sprite.Sprite):
 
     def walls_coll_x(self, walls):
         collisionList = pygame.sprite.spritecollide(self, walls, False)
+        if len(collisionList) != 0:
+            self.collidedList.append(collisionList[-1])
         for collision in collisionList:
             if self.rect.bottom > collision.get_top():
                 if self.left == False:
@@ -112,22 +115,18 @@ class Player(pygame.sprite.Sprite):
 
     def walls_coll_y(self, walls):
         collisionList = pygame.sprite.spritecollide(self, walls, False)
+        if len(collisionList) != 0:
+            self.collidedList.append(collisionList[-1])
         for collision in collisionList:
             if self.down == True:
                 self.rect.bottom = collision.get_top()
-            else:
-                self.rect.top = collision.get_bottom()
-            if self.rect.bottom > collision.get_top() - 2:
                 self.ontop = True
             else:
-                self.ontop = False
-        # if len(collisionList) == 0:
-        #     self.jumping = True
-        #     # print("flying")
-        # elif len(collisionList) > 0:
-        #     self.jumping = False
-            # print("landed")
-        print(collisionList, self.jumping)
+                self.rect.top = collision.get_bottom()
+        if self.collidedList == []:
+            self.ontop = False
+
+        print(collisionList, self.collidedList, self.jumping)
 
     def update_inventory(self, item):
         for key in item.keys():

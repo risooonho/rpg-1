@@ -69,12 +69,14 @@ items.add(coinList, sword)
 
 #Creates sprite group for walls
 walls = pygame.sprite.Group()
+# floors = pygame.sprite.Group()
 #Creates walls
 floor = Wall(0, DISPLAYHEIGHT, DISPLAYWIDTH, 10)
 wall1 = Wall(300, DISPLAYHEIGHT-100, 300, 30)
 wall2 = Wall(300, DISPLAYHEIGHT-400, 30, 300)
 #Adds walls to wall group
 walls.add(floor, wall1, wall2)
+# floors.add(floor)
 
 #Starting coords
 player = Player(DISPLAYWIDTH/2, 50, charImgs)
