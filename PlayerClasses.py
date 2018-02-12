@@ -55,11 +55,11 @@ class Player(pygame.sprite.Sprite):
     def move_check(self, oldx, oldy):
         #Jumping check/ Floor check
         #self.rect.y < (DISPLAYHEIGHT - (self.charHeight + 10)) and
-        # if self.ontop == False:
-        #     self.jumping = True
-        # else:
-        #     self.jumping = False
-            #self.rect.y = (DISPLAYHEIGHT - (self.charHeight + 10))
+        if self.ontop == False:
+            self.jumping = True
+        else:
+            self.jumping = False
+            # self.rect.y = (DISPLAYHEIGHT - (self.charHeight + 10))
         #Move check
         if self.rect.x == oldx and self.rect.y == oldy and self.jumping == False:
             self.moving = False
@@ -117,12 +117,16 @@ class Player(pygame.sprite.Sprite):
                 self.rect.bottom = collision.get_top()
             else:
                 self.rect.top = collision.get_bottom()
-        # if len(collisionList) != 0:
-        #     self.jumping = False
-        #     # print("flying")
-        # else:
+            if self.rect.bottom > collision.get_top() - 2:
+                self.ontop = True
+            else:
+                self.ontop = False
+        # if len(collisionList) == 0:
         #     self.jumping = True
-        #     # print("landed")
+        #     # print("flying")
+        # elif len(collisionList) > 0:
+        #     self.jumping = False
+            # print("landed")
         print(collisionList, self.jumping)
 
     def update_inventory(self, item):
